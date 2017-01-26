@@ -106,8 +106,7 @@ class OpenGraph(dict):
         pass
 
     def scrape_image(self, doc):
-        images = [dict(img.attrs)['src']
-            for img in doc.html.body.findAll('img')]
+        images = [dict(img.attrs).get('src', '') for img in doc.html.body.findAll('img') if dict(img.attrs).get('src', '')]
 
         if images:
             return images[0]
