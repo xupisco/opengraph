@@ -20,7 +20,7 @@ class OpenGraph(dict):
 
     required_attrs = ['title', 'type', 'image', 'url', 'description']
 
-    def __init__(self, url=None, html=None, scrape=False, **kwargs):
+    def __init__(self, url=None, html=None, scrape=False, user_agent=None, **kwargs):
         # If scrape == True, then will try to fetch missing attribtues
         # from the page's body
 
@@ -29,12 +29,12 @@ class OpenGraph(dict):
 
         for k in kwargs.keys():
             self[k] = kwargs[k]
-        
+
         dict.__init__(self)
-                
+
         if url is not None:
-            self.fetch(url)
-            
+            self.fetch(url, user_agent)
+
         if html is not None:
             self.parser(html)
 
@@ -43,14 +43,17 @@ class OpenGraph(dict):
 
     def __getattr__(self, name):
         return self[name]
-            
-    def fetch(self, url):
+
+    def fetch(self, url, user_agent):
         """
         """
-        raw = urllib2.urlopen(url)
+        req = urllib2.Request(url)
+        if user_agent:
+            req.add_header('User-agent', user_agent)
+        raw = urllib2.urlopen(req)
         html = raw.read()
         return self.parser(html)
-        
+
     def parser(self, html):
         """
         """
@@ -76,18 +79,18 @@ class OpenGraph(dict):
 
     def is_valid(self):
         return all([self.valid_attr(attr) for attr in self.required_attrs])
-        
+
     def to_html(self):
         if not self.is_valid():
             return u"<meta property=\"og:error\" content=\"og metadata is not valid\" />"
-            
+
         meta = u""
         for key,value in self.iteritems():
             meta += u"\n<meta property=\"og:%s\" content=\"%s\" />" %(key, value)
         meta += u"\n"
-        
+
         return meta
-        
+
     def to_json(self):
         # TODO: force unicode
         global import_json
@@ -96,9 +99,9 @@ class OpenGraph(dict):
 
         if not self.is_valid():
             return json.dumps({'error':'og metadata is not valid'})
-            
+
         return json.dumps(self)
-        
+
     def to_xml(self):
         pass
 
